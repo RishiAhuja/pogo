@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""Refresh the campus Sophos session. Never prints the password.
+
+A login is skipped when the last real attempt was under 90 seconds ago.
+Only the configured gateway receives credentials; TLS verification is on
+unless explicitly disabled for a legacy appliance.
+"""
+
+import fcntl
+import json
+import shlex
+import ssl
+import subprocess
+import time
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+CREDS = Path("/etc/nitj-portal/credentials")
+ENV_FILE = Path("/etc/hpc-relay/campus.env")
+LOCK = Path("/run/nitj-portal.lock")
+STAMP = Path("/run/nitj-portal.attempt")
+MIN_GAP = 90
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def load_file(path, shell_values=False):
+    found = {}
+    for line in path.read_text().splitlines():
+        if not line.strip() or line.strip().startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        if shell_values:
+            words = shlex.split(value, comments=True)
+            if len(words) > 1:
+                raise ValueError("Quote configuration values containing spaces")
+            value = words[0] if words else ""
+        found[key.strip()] = value
+    return found
+
+
+def recently_tried():
+    try:
+        last = int(STAMP.read_text().strip() or "0")
+    except (OSError, ValueError):
+        return False
+    return 0 <= time.time() - last < MIN_GAP
+
+
+def mark_attempt():
+    STAMP.write_text(str(int(time.time())) + "\n")
+
+
+def on_network(iface, connection):
+    try:
+        out = subprocess.check_output(
+            ["nmcli", "--escape", "no", "-g", "GENERAL.CONNECTION", "device", "show", iface],
+            text=True,
+            timeout=10,
+            stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.SubprocessError, OSError):
+        return False
+    return out.strip() == connection
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def login(host, creds, verify=True, ca_file=None):
+    payload = {
+        "username": creds["username"],
+        "password": creds["password"],
+        "languageid": "1",
+    }
+    data = urllib.parse.urlencode({"mode": "451", "json": json.dumps(payload)}).encode()
+    ctx = ssl.create_default_context(cafile=ca_file) if verify else ssl._create_unverified_context()
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        NoRedirect(),
+        urllib.request.HTTPSHandler(context=ctx),
+        urllib.request.HTTPCookieProcessor(),
+    )
+    base = f"https://{host}:4443"
+    opener.open(base + "/", timeout=12).read()
+    req = urllib.request.Request(
+        base + "/userportal/Controller",
+        data=data,
+        method="POST",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Referer": base + "/",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+    )
+    with opener.open(req, timeout=12) as resp:
+        body = json.loads(resp.read().decode())
+    return body.get("status")
+
+
+def main():
+    try:
+        env = load_file(ENV_FILE, shell_values=True)
+    except (OSError, ValueError):
+        log("portal_down config")
+        return 1
+    enabled = env.get("PORTAL_ENABLED", "1")
+    if enabled not in ("0", "1"):
+        log("portal_down config")
+        return 1
+    if enabled == "0":
+        log("portal_skip disabled")
+        return 0
+    iface = env.get("WIFI_IFACE", "")
+    connection = env.get("WIFI_CONNECTION", "")
+    gateway = env.get("PORTAL_GATEWAY", "")
+    verify = env.get("PORTAL_TLS_VERIFY", "1")
+    if (
+        not iface
+        or not connection
+        or not gateway
+        or verify not in ("0", "1")
+        or any(
+            c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-"
+            for c in gateway
+        )
+    ):
+        log("portal_down config")
+        return 1
+    if not on_network(iface, connection):
+        log("portal_skip not-on-campus-wifi")
+        return 0
+    if recently_tried():
+        log("portal_skip recent")
+        return 0
+
+    try:
+        creds = load_file(CREDS)
+    except OSError:
+        log("portal_down credentials-missing")
+        return 1
+    if not creds.get("username") or not creds.get("password"):
+        log("portal_down credentials-missing")
+        return 1
+
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK.open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if recently_tried():
+            log("portal_skip recent")
+            return 0
+        if not on_network(iface, connection):
+            log("portal_skip not-on-campus-wifi")
+            return 0
+        mark_attempt()
+        try:
+            status = login(
+                gateway, creds, verify=verify == "1", ca_file=env.get("PORTAL_CA_FILE") or None
+            )
+        except Exception as exc:
+            log(f"portal_down {type(exc).__name__}")
+            return 1
+        log(f"portal_status {status}")
+        return 0 if str(status) == "200" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
