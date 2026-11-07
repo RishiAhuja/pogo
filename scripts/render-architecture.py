@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the README illustration using local Athletics fonts and generated icons.
+"""Build Pogo's README illustration using local Athletics fonts and generated icons.
 
 Requires the development dependency FontTools. No font files are embedded in the
 output: lettering is converted to outlines. Use only fonts you are licensed to use.
@@ -95,7 +95,7 @@ def main():
     body = [f'<rect width="1600" height="700" fill="{BG}"/>']
     body.extend(
         [
-            bold.text("HPC RELAY", 72, 62, 15, MUTED, tracking=1.6),
+            bold.text("POGO", 72, 62, 15, MUTED, tracking=1.6),
             bold.text("The scenic route to your cluster.", 72, 119, 42, tracking=-0.8),
         ]
     )
@@ -139,7 +139,7 @@ def main():
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" '
         'viewBox="0 0 1600 700" role="img" aria-labelledby="title description">\n'
-        '<title id="title">The scenic route to your cluster</title>\n'
+        '<title id="title">Pogo: the scenic route to your cluster</title>\n'
         f'<desc id="description">{escape(description)}</desc>\n<defs>\n'
         '<marker id="arrow" viewBox="0 0 9 9" refX="8" refY="4.5" '
         'markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">'

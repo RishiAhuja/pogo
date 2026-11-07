@@ -1,6 +1,6 @@
 # Architecture illustration
 
-The README uses `../architecture.png`, a 3200 × 1400 raster export of
+Pogo's README uses `../architecture.png`, a 3200 × 1400 raster export of
 `../architecture.svg`. The SVG contains outlined Athletics lettering and embedded
 PNG spot illustrations, so it needs no external fonts, images, or network requests.
 The bastion server is depicted as a laptop. Its reverse-SSH arrow points back to

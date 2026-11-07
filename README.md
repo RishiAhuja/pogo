@@ -1,4 +1,4 @@
-# HPC relay
+# Pogo
 
 ![The scenic route to your cluster: a client, a public relay, a laptop acting as a bastion server, and an HPC cluster.](docs/assets/architecture.png)
 
@@ -8,16 +8,16 @@ the cluster is only reachable from the campus network. A spare Linux laptop
 stays there as your bastion server, holding the fort while you take your own
 machine with you.
 
-The bastion keeps an outbound reverse SSH tunnel open to a small public relay.
-From wherever you are, `ssh hpc` takes you through the relay and the bastion to
-the cluster. You can check a job, collect results, or submit the next run. The
-compute stays on the cluster, and your private destination key stays on your
-client. Your coffee gets to stay with you, too.
+Pogo makes that connection possible with an outbound reverse SSH tunnel from the
+bastion to a small public relay. From wherever you are, `ssh hpc` takes you through
+the relay and the bastion to the cluster. You can check a job, collect results, or
+submit the next run. The compute stays on the cluster, and your private
+destination key stays on your client. Your coffee gets to stay with you, too.
 
 The same approach can work for a lab workstation or a home server behind NAT.
 You need a bastion that can reach the private host and make an outbound SSH
-connection to the relay. This repository packages the tunnel, Wi-Fi recovery,
-and status page for the Ubuntu setup below.
+connection to the relay. Pogo packages the tunnel, Wi-Fi recovery, and status
+page for the Ubuntu setup below.
 
 ## What's included
 
