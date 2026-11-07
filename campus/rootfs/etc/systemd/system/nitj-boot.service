@@ -1,0 +1,12 @@
+[Unit]
+Description=Start campus Wi-Fi, portal, and the relay tunnel at boot
+After=NetworkManager.service network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nitj-wifi-ensure
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
