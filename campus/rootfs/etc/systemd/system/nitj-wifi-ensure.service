@@ -1,0 +1,8 @@
+[Unit]
+Description=Keep campus Wi-Fi associated and the tunnel scheduled
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nitj-wifi-ensure
+TimeoutStartSec=90

@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch campus Wi-Fi and the relay tunnel
+
+[Timer]
+OnBootSec=20
+OnUnitInactiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target
