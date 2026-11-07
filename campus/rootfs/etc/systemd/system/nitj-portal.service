@@ -1,0 +1,9 @@
+[Unit]
+Description=Campus captive-portal login
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/nitj-portal-login
+TimeoutStartSec=45
