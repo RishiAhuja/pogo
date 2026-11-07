@@ -93,12 +93,7 @@ def main():
     icons = ROOT / "docs/assets/architecture"
     nodes = [(170, 600), (590, 370), (1010, 600), (1430, 370)]
     body = [f'<rect width="1600" height="700" fill="{BG}"/>']
-    body.extend(
-        [
-            bold.text("POGO", 72, 62, 15, MUTED, tracking=1.6),
-            bold.text("The scenic route to your cluster.", 72, 119, 42, tracking=-0.8),
-        ]
-    )
+    body.append(bold.text("The scenic route to your cluster.", 72, 119, 42, tracking=-0.8))
     body.extend(
         [
             connection(nodes[0], nodes[1]),
@@ -139,7 +134,7 @@ def main():
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" '
         'viewBox="0 0 1600 700" role="img" aria-labelledby="title description">\n'
-        '<title id="title">Pogo: the scenic route to your cluster</title>\n'
+        '<title id="title">The scenic route to your cluster</title>\n'
         f'<desc id="description">{escape(description)}</desc>\n<defs>\n'
         '<marker id="arrow" viewBox="0 0 9 9" refX="8" refY="4.5" '
         'markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">'
