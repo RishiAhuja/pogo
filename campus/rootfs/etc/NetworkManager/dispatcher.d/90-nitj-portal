@@ -1,0 +1,15 @@
+#!/bin/bash
+# Schedule the watchdog when the campus interface comes up. It checks portal
+# connectivity asynchronously, and portal login shares a rate limit.
+set -u
+if [[ ! -f /etc/hpc-relay/campus.env ]]; then
+  exit 0
+fi
+set -a
+# shellcheck disable=SC1091
+. /etc/hpc-relay/campus.env
+set +a
+if [[ "$1" == "${WIFI_IFACE:-}" && "$2" == "up" ]]; then
+  systemctl start --no-block nitj-wifi-ensure.service || true
+fi
+exit 0
