@@ -1,0 +1,37 @@
+#!/bin/bash
+# One reverse tunnel. Exits on any failure so systemd can start it again.
+set -eu
+set -a
+# shellcheck disable=SC1091
+. /etc/hpc-relay/campus.env
+set +a
+: "${WIFI_IFACE:?}"
+: "${RELAY_HOST:?}"
+: "${RELAY_USER:?}"
+: "${TUNNEL_KEY:?}"
+
+port=${RELAY_PORT:-2222}
+if [[ ! "$port" =~ ^[0-9]+$ ]] || (( 10#$port < 1 || 10#$port > 65535 )); then
+  echo "RELAY_PORT must be between 1 and 65535." >&2
+  exit 1
+fi
+
+exec /usr/bin/ssh \
+  -i "$TUNNEL_KEY" \
+  -N \
+  -o BatchMode=yes \
+  -o IdentitiesOnly=yes \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=15 \
+  -o ServerAliveCountMax=3 \
+  -o ConnectTimeout=12 \
+  -o ConnectionAttempts=1 \
+  -o TCPKeepAlive=yes \
+  -o IPQoS=none \
+  -o StrictHostKeyChecking=yes \
+  -o UpdateHostKeys=no \
+  -o UserKnownHostsFile=/dev/null \
+  -o GlobalKnownHostsFile=/etc/ssh/ssh_known_hosts \
+  -o "BindInterface=${WIFI_IFACE}" \
+  -R "127.0.0.1:${port}:127.0.0.1:22" \
+  "${RELAY_USER}@${RELAY_HOST}"
