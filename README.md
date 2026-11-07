@@ -60,13 +60,17 @@ health checks, maintenance, and recovery.
 
 ## Try the status page
 
+![Relay status page showing an up tunnel, 100% uptime over 24 hours, 99.9% over seven days, and two brief interruptions.](docs/assets/status-up.jpg)
+
+*A healthy tunnel, shown with sample monitoring data.*
+
 You can preview the design locally with sample data:
 
 ```bash
-python3 relay/bin/tunnel-status-web.py --preview down
+python3 relay/bin/tunnel-status-web.py --preview up
 ```
 
-Open [localhost:8080](http://127.0.0.1:8080/). Use `--preview up` to see a healthy
+Open [localhost:8080](http://127.0.0.1:8080/). Use `--preview down` to see an unavailable
 tunnel. Preview mode needs no root access and does not probe a tunnel, send email,
 or write history.
 
