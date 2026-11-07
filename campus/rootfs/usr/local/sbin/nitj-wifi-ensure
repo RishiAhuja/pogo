@@ -1,0 +1,49 @@
+#!/bin/bash
+# Rejoin the campus Wi-Fi when it is visible, refresh the portal only when
+# captive, and start the tunnel again if systemd has left it stopped.
+set -u
+set -a
+# shellcheck disable=SC1091
+. /etc/hpc-relay/campus.env
+set +a
+: "${WIFI_IFACE:?}"
+: "${WIFI_CONNECTION:?}"
+
+exec 9>/run/nitj-wifi-ensure.lock
+if ! flock -n 9; then
+  exit 0
+fi
+
+rfkill unblock wifi || true
+nmcli radio wifi on || true
+iw dev "$WIFI_IFACE" set power_save off 2>/dev/null || true
+
+active=$(nmcli --escape no -g GENERAL.CONNECTION device show "$WIFI_IFACE" 2>/dev/null || true)
+if [[ "$active" != "$WIFI_CONNECTION" ]]; then
+  ssid=$(nmcli --escape no -g 802-11-wireless.ssid connection show "$WIFI_CONNECTION" 2>/dev/null || true)
+  ssid=${WIFI_SSID:-$ssid}
+  if [[ -n "$ssid" ]] && nmcli --escape no -t -f SSID device wifi list ifname "$WIFI_IFACE" --rescan yes 2>/dev/null | grep -Fxq -- "$ssid"; then
+    logger -t nitj-wifi "${WIFI_CONNECTION} visible while on ${active:-nothing}; switching"
+    nmcli --wait 20 connection up "$WIFI_CONNECTION" ifname "$WIFI_IFACE" || logger -t nitj-wifi "${WIFI_CONNECTION} connect failed"
+  else
+    logger -t nitj-wifi "${WIFI_CONNECTION} not visible (active=${active:-nothing})"
+  fi
+  active=$(nmcli --escape no -g GENERAL.CONNECTION device show "$WIFI_IFACE" 2>/dev/null || true)
+fi
+
+if [[ "$active" == "$WIFI_CONNECTION" ]]; then
+  conn=$(nmcli networking connectivity check 2>/dev/null || true)
+  case "$conn" in
+    portal|limited|none)
+      logger -t nitj-wifi "connectivity=${conn}; portal login"
+      /usr/local/sbin/nitj-portal-login || true
+      ;;
+  esac
+fi
+
+if ! systemctl is-active --quiet aws-reverse-tunnel.service; then
+  logger -t nitj-wifi "tunnel inactive; starting"
+  systemctl reset-failed aws-reverse-tunnel.service || true
+  systemctl start --no-block aws-reverse-tunnel.service || true
+fi
+exit 0
