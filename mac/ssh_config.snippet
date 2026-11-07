@@ -1,0 +1,28 @@
+# Append to ~/.ssh/config on the client. Replace the four placeholders below.
+# Also check the relay admin user and reverse port for your deployment.
+# The HPC private key stays on the Mac. ProxyJump authenticates from here.
+# Do not copy that key to the relay or the laptop.
+
+Host aws-relay
+  HostName RELAY_IP
+  User ubuntu
+  IdentityFile ~/.ssh/hpc_relay
+  IdentitiesOnly yes
+  ServerAliveInterval 30
+  ServerAliveCountMax 3
+
+Host campus
+  HostName 127.0.0.1
+  Port 2222
+  User CAMPUS_USER
+  ProxyJump aws-relay
+  IdentityFile ~/.ssh/hpc_campus
+  IdentitiesOnly yes
+  HostKeyAlias campus-bastion
+
+Host hpc
+  HostName HPC_PRIVATE_IP
+  User HPC_USER
+  ProxyJump campus
+  IdentityFile ~/.ssh/hpc_cluster
+  IdentitiesOnly yes
