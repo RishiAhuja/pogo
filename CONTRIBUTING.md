@@ -20,5 +20,4 @@ portal appliance.
 
 Configuration belongs in example files with documentation placeholders. Keep real
 deployment notes in `.local/` and never commit private keys, credentials, Resend
-keys, or third-party font binaries. The included moon's provenance is documented
-under `relay/assets/`.
+keys, or third-party font binaries.

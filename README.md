@@ -83,8 +83,7 @@ tunnel. Preview mode needs no root access and does not probe a tunnel, send emai
 or write history.
 
 The page works with system fonts. Athletics is optional and is not distributed
-here. Supply the font files only if you have the right to use them. The moon is
-a local image, with its [generation notes](relay/assets/README.md) included.
+here. Supply the font files only if you have the right to use them.
 
 ## Security and limits
 
