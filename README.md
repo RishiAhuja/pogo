@@ -14,6 +14,12 @@ the relay and the bastion to the cluster. You can check a job, collect results, 
 submit the next run. The compute stays on the cluster, and your private
 destination key stays on your client. Your coffee gets to stay with you, too.
 
+Pogo was built for a setup at **NIT Jalandhar (NITJ)**, where campus Wi-Fi uses a
+captive portal for internet access. The optional login script targets the Sophos
+portal used in that setup. If your college uses a different portal, you may need
+to adapt the script or write your own adapter. If there is no portal, leave the
+helper disabled. The reverse SSH tunnel works independently of the portal helper.
+
 The same approach can work for a lab workstation or a home server behind NAT.
 You need a bastion that can reach the private host and make an outbound SSH
 connection to the relay. Pogo packages the tunnel, Wi-Fi recovery, and status
@@ -23,7 +29,7 @@ page for the Ubuntu setup below.
 
 - A reverse SSH tunnel with a loopback-only listener, pinned host keys, and automatic retries.
 - A NetworkManager watchdog that reconnects a saved Wi-Fi profile.
-- An optional Sophos mode `451` captive-portal adapter with a shared login rate limit.
+- An optional adapter for NITJ's Sophos mode `451` captive portal, with a shared login rate limit.
 - A small status page with probe history and optional Resend email alerts.
 - Separate, optional helpers for GDM autologin and a limited dracut/LUKS boot setup.
 
@@ -35,7 +41,7 @@ page for the Ubuntu setup below.
 | Bastion server | Ubuntu 24.04, systemd, OpenSSH server, NetworkManager managing Wi-Fi |
 | Client | macOS or Linux with Bash and OpenSSH. Windows users can use WSL. |
 | Private destination | An SSH host reachable from the bastion |
-| Captive portal | Optional Sophos `/userportal/Controller`, mode `451` |
+| Captive portal | Optional adapter for the NITJ/Sophos `/userportal/Controller` flow, mode `451` |
 
 The documented bastion is a campus laptop. Other networks or Linux distributions
 may need changes, and other captive portals need their own adapter. You need
@@ -51,8 +57,10 @@ supply, including the four placeholders in the client SSH snippet. Keep your
 actual values in a private copy of the [deployment worksheet](docs/this-deployment.md).
 
 The files in [`config/`](config/) are examples. Copy and edit them for your
-machines before installing. You do not need to edit the source scripts or replace
-the internal template markers yourself.
+machines before installing. The installers replace internal template markers
+automatically. For other campus networks, read the
+[portal adapter notes](docs/setup.md#adapting-the-portal-helper) and
+[network-specific settings](docs/configuration.md#other-campus-and-network-settings).
 
 For details about the SSH path and recovery behavior, read the
 [design notes](docs/design.md). The [operations guide](docs/operations.md) covers

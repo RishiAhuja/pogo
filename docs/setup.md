@@ -1,5 +1,11 @@
 # Setup
 
+This guide follows the Ubuntu Wi-Fi setup used at NIT Jalandhar (NITJ). That
+network uses a captive portal, and Pogo includes an optional script for its
+Sophos login flow. At another college, configure your own network profile and
+adapt the portal helper if needed. The reverse SSH tunnel does not depend on
+the Sophos helper.
+
 Run the relay installer on the relay and the campus installer on the laptop.
 Neither installer provisions cloud infrastructure. They change system services;
 use dedicated machines and keep a working admin session or console available.
@@ -147,9 +153,17 @@ accepts a new one interactively.
 
 ## 6. Optional Sophos portal
 
+The bundled [`nitj-portal-login`](../campus/rootfs/usr/local/sbin/nitj-portal-login)
+script was written for the captive portal in the NITJ setup. It authenticates
+to a Sophos user portal at `https://PORTAL_GATEWAY:4443/userportal/Controller`
+using mode `451`. This is a specific login flow, not a general captive-portal
+client. Another college may use different endpoints, request fields, or session
+handling, even if it also uses Sophos.
+
 Leave `PORTAL_ENABLED=0` if there is no portal, the network is authenticated by
-another mechanism, or your portal uses a different API. Supply a different
-adapter yourself for other appliances; the bundled one is not universal.
+another mechanism, or your portal uses a different API. You can run the tunnel
+without this script once the bastion has network access. For another portal,
+prepare a compatible adapter before enabling portal automation.
 
 For Sophos mode 451, set `PORTAL_ENABLED=1` and the exact `PORTAL_GATEWAY`. The
 adapter only sends credentials to that host, while the configured Wi-Fi profile
@@ -175,6 +189,26 @@ Every caller shares a 90-second minimum gap, including the 25-minute timer.
 That refresh interval was chosen for a 30-minute Sophos session; adjust the timer
 if your administrator specifies a different expiry. Incorrect credentials still
 need to be corrected manually and can cause an account lockout.
+
+### Adapting the portal helper
+
+For a similar username/password portal, start with the script's `login()`
+function. Adapt the URL, port, request fields, cookies or tokens, and response
+handling to your college's documented login flow. `PORTAL_GATEWAY` accepts only
+a hostname or IP address; the port and request format are part of the script.
+Normalize successful authentication to `200`, which the existing wrapper expects.
+
+Keep the configured-network check, restricted credential file, TLS verification,
+and shared lock and rate limit around the login request. Adjust the refresh
+interval in `nitj-portal.timer` to the session lifetime on your network. The
+bundled 25-minute interval comes from the NITJ setup's 30-minute session.
+
+Keep your adapted source in your fork before running `campus/install.sh`.
+Installation copies the helper onto the bastion, and reinstallation copies it
+again. If you replace the helper entirely, update the installer validation,
+portal service, and Wi-Fi watchdog to use its configuration and entry point.
+The bundled helper does not implement SSO, MFA, or interactive browser login.
+For those networks, use the authentication method supported by your institution.
 
 ## 7. Install the campus side
 
