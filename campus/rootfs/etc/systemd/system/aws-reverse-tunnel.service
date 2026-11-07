@@ -1,0 +1,17 @@
+[Unit]
+Description=Persistent reverse SSH tunnel to the relay
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+User=__CAMPUS_USER__
+Group=__CAMPUS_GROUP__
+ExecStart=/usr/local/sbin/aws-reverse-tunnel
+Restart=always
+RestartSec=20
+TimeoutStopSec=15
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
